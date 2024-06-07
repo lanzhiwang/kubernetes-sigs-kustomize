@@ -1,3 +1,5 @@
+# https://github.com/kubernetes-sigs/kustomize/issues/4520
+# Deprecate ValueAddTransformer in favour of Replacements #4520
 apiVersion: builtin
 kind: ValueAddTransformer
 metadata:
