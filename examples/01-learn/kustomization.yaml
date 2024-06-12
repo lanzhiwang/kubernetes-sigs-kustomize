@@ -1,44 +1,52 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization # 参考 type Kustomization struct
-resources:
-  - pod.yaml
-  - service.yaml
-  - https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml
-  - ../../base
-# bases:  // Deprecated: Anything that would have been specified here should be specified in the Resources field instead.
-configMapGenerator:
-  - name: app-cm
-    literals:
-      - MY_CONFIG_1=config one
-      - MY_CONFIG_2=config two
-secretGenerator:
-  - name: app-secret
-    envs:
-      - secrets.properties
-generatorOptions:
-  labels: # adds labels to the generated resources
-    my.label: mylabel
-  annotations: # adds annotations to the generated resources
-    my.annotation: myannotation
-  disableNameSuffixHash: true # disables the suffix generation
-  immutable: true # marks the resources as immutable
-images:
-  - name: nginx
-    newTag: 1.21.6
-  - name: app
-    newName: app
-    newTag: 68b4c528
-# imageTags:  // Deprecated: Use the Images field instead.
-replicas:
-  - name: another-app
-    count: 3
+
+# OpenAPI contains information about what kubernetes schema to use.
+# OpenAPI map[string]string `json:"openapi,omitempty" yaml:"openapi,omitempty"`
+openapi:
+  path: my_schema.json
+  version: v1.20.4
+
+# NamePrefix will prefix the names of all resources mentioned in the kustomization
+# file including generated configmaps and secrets.
+# NamePrefix string `json:"namePrefix,omitempty" yaml:"namePrefix,omitempty"`
 namePrefix: myprefix-
+
+# NameSuffix will suffix the names of all resources mentioned in the kustomization
+# file including generated configmaps and secrets.
+# NameSuffix string `json:"nameSuffix,omitempty" yaml:"nameSuffix,omitempty"`
 nameSuffix: -mysuffix
+
+# Namespace to add to all objects.
+# Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
 namespace: my-namespace
+
+# CommonLabels to add to all objects and selectors.
+# CommonLabels map[string]string `json:"commonLabels,omitempty" yaml:"commonLabels,omitempty"`
 commonLabels:
   my.label: mylabel
+
+# Labels to add to all objects but not selectors.
+# Labels []Label `json:"labels,omitempty" yaml:"labels,omitempty"`
+labels:
+  - pairs:
+      someName: someValue
+      owner: alice
+      app: bingo
+    includeSelectors: true # <-- false by default
+    includeTemplates: true # <-- false by default
+
+# CommonAnnotations to add to all objects.
+# CommonAnnotations map[string]string `json:"commonAnnotations,omitempty" yaml:"commonAnnotations,omitempty"`
 commonAnnotations:
   my.annotation: myannotation
+
+# Deprecated: Use the Patches field instead, which provides a superset of the functionality of PatchesStrategicMerge.
+# PatchesStrategicMerge specifies the relative path to a file
+# containing a strategic merge patch.  Format documented at
+# https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md
+# URLs and globs are not supported.
+# PatchesStrategicMerge []PatchStrategicMerge `json:"patchesStrategicMerge,omitempty" yaml:"patchesStrategicMerge,omitempty"`
 patchesStrategicMerge:
   - patch-pod.yaml
   - service_port_8888.yaml
@@ -55,6 +63,44 @@ patchesStrategicMerge:
           containers:
             - name: nginx
               image: nignx:latest
+
+# Deprecated: Use the Patches field instead, which provides a superset of the functionality of JSONPatches.
+# JSONPatches is a list of JSONPatch for applying JSON patch.
+# Format documented at https://tools.ietf.org/html/rfc6902
+# and http://jsonpatch.com
+# PatchesJson6902 []Patch `json:"patchesJson6902,omitempty" yaml:"patchesJson6902,omitempty"`
+patchesJson6902:
+  - target:
+      version: v1
+      kind: Pod
+      name: myapp
+    path: patch.yaml
+  - target:
+      version: v1
+      kind: Deployment
+      name: my-deployment
+    path: add_init_container.yaml
+  - target:
+      version: v1
+      kind: Service
+      name: my-service
+    path: add_service_annotation.yaml
+  - target:
+      version: v1
+      kind: Deployment
+      name: my-deployment
+    patch: |-
+      - op: add
+        path: /some/new/path
+        value: value
+      - op: replace
+        path: /some/existing/path
+        value: "new value"
+
+# Patches is a list of patches, where each one can be either a
+# Strategic Merge Patch or a JSON patch.
+# Each patch can be applied to multiple target objects.
+# Patches []Patch `json:"patches,omitempty" yaml:"patches,omitempty"`
 patches:
   - patch: |-
       $patch: delete
@@ -137,45 +183,25 @@ patches:
   - path: fix-version.patch.yaml
     target:
       labelSelector: "app.kubernetes.io/name=nginx"
-patchesJson6902:
-  - target:
-      version: v1
-      kind: Pod
-      name: myapp
-    path: patch.yaml
-  - target:
-      version: v1
-      kind: Deployment
-      name: my-deployment
-    path: add_init_container.yaml
-  - target:
-      version: v1
-      kind: Service
-      name: my-service
-    path: add_service_annotation.yaml
-  - target:
-      version: v1
-      kind: Deployment
-      name: my-deployment
-    patch: |-
-      - op: add
-        path: /some/new/path
-        value: value
-      - op: replace
-        path: /some/existing/path
-        value: "new value"
-crds:
-  - crd.json
-  - crds/typeA.yaml
-  - crds/typeB.yaml
-vars:
-  - name: MY_SERVICE_NAME
-    objref:
-      name: myapp
-      kind: Service
-      apiVersion: v1
-    fieldref:
-      fieldpath: metadata.name
+
+# Images is a list of (image name, new name, new tag or digest)
+# for changing image names, tags or digests. This can also be achieved with a
+# patch, but this operator is simpler to specify.
+# Images []Image `json:"images,omitempty" yaml:"images,omitempty"`
+images:
+  - name: nginx
+    newTag: 1.21.6
+  - name: app
+    newName: app
+    newTag: 68b4c528
+
+# Deprecated: Use the Images field instead.
+# ImageTags []Image `json:"imageTags,omitempty" yaml:"imageTags,omitempty"`
+# imageTags:
+
+# Replacements is a list of replacements, which will copy nodes from a
+# specified source to N specified targets.
+# Replacements []ReplacementField `json:"replacements,omitempty" yaml:"replacements,omitempty"`
 replacements:
   - path: replacement.yaml
   - source:
@@ -188,17 +214,34 @@ replacements:
           name: myapp
         fieldPaths:
           - spec.containers.[name=myapp].args.1
-labels:
-  - pairs:
-      someName: someValue
-      owner: alice
-      app: bingo
-    includeSelectors: true # <-- false by default
-    includeTemplates: true # <-- false by default
-buildMetadata: [managedByLabel, originAnnotations, transformerAnnotations]
-openapi:
-  path: my_schema.json
-  version: v1.20.4
+
+# Replicas is a list of {resourcename, count} that allows for simpler replica
+# specification. This can also be done with a patch.
+# Replicas []Replica `json:"replicas,omitempty" yaml:"replicas,omitempty"`
+replicas:
+  - name: another-app
+    count: 3
+
+# Deprecated: Vars will be removed in future release. Migrate to Replacements instead.
+# Vars allow things modified by kustomize to be injected into a
+# kubernetes object specification. A var is a name (e.g. FOO) associated
+# with a field in a specific resource instance.  The field must
+# contain a value of type string/bool/int/float, and defaults to the name field
+# of the instance.  Any appearance of "$(FOO)" in the object
+# spec will be replaced at kustomize build time, after the final
+# value of the specified field has been determined.
+# Vars []Var `json:"vars,omitempty" yaml:"vars,omitempty"`
+vars:
+  - name: MY_SERVICE_NAME
+    objref:
+      name: myapp
+      kind: Service
+      apiVersion: v1
+    fieldref:
+      fieldpath: metadata.name
+
+# SortOptions change the order that kustomize outputs resources.
+# SortOptions *SortOptions `json:"sortOptions,omitempty" yaml:"sortOptions,omitempty"`
 # sortOptions:
 #   order: fifo
 # sortOptions:
@@ -230,21 +273,105 @@ openapi:
 #     orderLast:
 #     - MutatingWebhookConfiguration
 #     - ValidatingWebhookConfiguration
+
+# Resources specifies relative paths to files holding YAML representations
+# of kubernetes API objects, or specifications of other kustomizations
+# via relative paths, absolute paths, or URLs.
+# Resources []string `json:"resources,omitempty" yaml:"resources,omitempty"`
+resources:
+  - pod.yaml
+  - service.yaml
+  - https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml
+  - ../../base
+
+# Components specifies relative paths to specifications of other Components
+# via relative paths, absolute paths, or URLs.
+# Components []string `json:"components,omitempty" yaml:"components,omitempty"`
 components: # 参考 type Kustomization struct
   - ../components/common-annotations
+
+# Crds specifies relative paths to Custom Resource Definition files.
+# This allows custom resources to be recognized as operands, making
+# it possible to add them to the Resources list.
+# CRDs themselves are not modified.
+# Crds []string `json:"crds,omitempty" yaml:"crds,omitempty"`
+crds:
+  - crd.json
+  - crds/typeA.yaml
+  - crds/typeB.yaml
+
+# Deprecated: Anything that would have been specified here should be specified in the Resources field instead.
+# Bases []string `json:"bases,omitempty" yaml:"bases,omitempty"`
+# bases:
+
+# ConfigMapGenerator is a list of configmaps to generate from
+# local data (one configMap per list item).
+# The resulting resource is a normal operand, subject to
+# name prefixing, patching, etc.  By default, the name of
+# the map will have a suffix hash generated from its contents.
+# ConfigMapGenerator []ConfigMapArgs `json:"configMapGenerator,omitempty" yaml:"configMapGenerator,omitempty"`
+configMapGenerator:
+  - name: app-cm
+    literals:
+      - MY_CONFIG_1=config one
+      - MY_CONFIG_2=config two
+
+# SecretGenerator is a list of secrets to generate from
+# local data (one secret per list item).
+# The resulting resource is a normal operand, subject to
+# name prefixing, patching, etc.  By default, the name of
+# the map will have a suffix hash generated from its contents.
+# SecretGenerator []SecretArgs `json:"secretGenerator,omitempty" yaml:"secretGenerator,omitempty"`
+secretGenerator:
+  - name: app-secret
+    envs:
+      - secrets.properties
+
+# HelmGlobals contains helm configuration that isn't chart specific.
+# HelmGlobals *HelmGlobals `json:"helmGlobals,omitempty" yaml:"helmGlobals,omitempty"`
+# helmGlobals:
+
+# HelmCharts is a list of helm chart configuration instances.
+# HelmCharts []HelmChart `json:"helmCharts,omitempty" yaml:"helmCharts,omitempty"`
+# helmCharts:
+
+# HelmChartInflationGenerator is a list of helm chart configurations.
+# Deprecated.  Auto-converted to HelmGlobals and HelmCharts.
+# HelmChartInflationGenerator []HelmChartArgs `json:"helmChartInflationGenerator,omitempty" yaml:"helmChartInflationGenerator,omitempty"`
+# helmChartInflationGenerator:
+
+# GeneratorOptions modify behavior of all ConfigMap and Secret generators.
+# GeneratorOptions *GeneratorOptions `json:"generatorOptions,omitempty" yaml:"generatorOptions,omitempty"`
+generatorOptions:
+  labels: # adds labels to the generated resources
+    my.label: mylabel
+  annotations: # adds annotations to the generated resources
+    my.annotation: myannotation
+  disableNameSuffixHash: true # disables the suffix generation
+  immutable: true # marks the resources as immutable
+
+# Configurations is a list of transformer configuration files
+# Configurations []string `json:"configurations,omitempty" yaml:"configurations,omitempty"`
 configurations:
   # configuration for transformers
   # 参考 examples/transformerconfigs
   - configuration.yaml
-##################################################################################################################
-transformers:
-  - transformers.yaml
+
+# Generators is a list of files containing custom generators
+# Generators []string `json:"generators,omitempty" yaml:"generators,omitempty"`
 generators:
   - generators.yaml
+
+# Transformers is a list of files containing transformers
+# Transformers []string `json:"transformers,omitempty" yaml:"transformers,omitempty"`
+transformers:
+  - transformers.yaml
+
+# Validators is a list of files containing validators
+# Validators []string `json:"validators,omitempty" yaml:"validators,omitempty"`
 validators:
   - validators.yaml
-############# helm
-# helmGlobals:
-# helmCharts:
-# helmChartInflationGenerator:
 
+# BuildMetadata is a list of strings used to toggle different build options
+# BuildMetadata []string `json:"buildMetadata,omitempty" yaml:"buildMetadata,omitempty"`
+buildMetadata: [managedByLabel, originAnnotations, transformerAnnotations]
