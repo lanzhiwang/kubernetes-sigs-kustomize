@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - wordpress
+  - mysql
+patches:
+  - path: patch.yaml
+namePrefix: demo-
+vars:
+  - name: WORDPRESS_SERVICE
+    objref:
+      kind: Service
+      name: wordpress
+      apiVersion: v1
+    fieldref:
+      fieldpath: metadata.name
+  - name: MYSQL_SERVICE
+    objref:
+      kind: Service
+      name: mysql
+      apiVersion: v1

@@ -16,14 +16,14 @@ spec:
         app: wordpress
     spec:
       containers:
-      - image: wordpress:4.8-apache
-        name: wordpress
-        ports:
-        - containerPort: 80
+        - image: wordpress:4.8-apache
           name: wordpress
-        volumeMounts:
-        - name: wordpress-persistent-storage
-          mountPath: /var/www/html
+          ports:
+            - containerPort: 80
+              name: wordpress
+          volumeMounts:
+            - name: wordpress-persistent-storage
+              mountPath: /var/www/html
       volumes:
-      - name: wordpress-persistent-storage
-        emptyDir: {}
+        - name: wordpress-persistent-storage
+          emptyDir: {}
