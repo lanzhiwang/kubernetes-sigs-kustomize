@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+configMapGenerator:
+  - literals:
+      - foo=bar
+      - baz=qux
+    name: my-configmap
+# ---
+# apiVersion: v1
+# data:
+#   baz: qux
+#   foo: bar
+# kind: ConfigMap
+# metadata:
+#   name: my-configmap-6b85g79g7g
+generatorOptions:
+  annotations:
+    annotations.only.for.generated: othervalue
+  disableNameSuffixHash: true
+  labels:
+    kustomize.generated.resource: somevalue
+# ---
+# apiVersion: v1
+# data:
+#   baz: qux
+#   foo: bar
+# kind: ConfigMap
+# metadata:
+#   annotations:
+#     annotations.only.for.generated: othervalue
+#   labels:
+#     kustomize.generated.resource: somevalue
+#   name: my-configmap
