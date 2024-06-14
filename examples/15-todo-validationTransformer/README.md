@@ -219,3 +219,56 @@ data: Invalid type. Expected: object, given: array
 ```shell
 rm -rf $DEMO_HOME
 ```
+
+```bash
+$ kustomize build $DEMO_HOME/valid --enable-alpha-plugins
+Error: unable to find plugin root - tried: ('<no value>'; homed in $KUSTOMIZE_PLUGIN_HOME), ('<no value>'; homed in $XDG_CONFIG_HOME), ('/Users/huzhi/.config/kustomize/plugin'; homed in default value of $XDG_CONFIG_HOME), ('/Users/huzhi/kustomize/plugin'; homed in home directory)
+
+$ tree -a $DEMO_HOME
+/Users/huzhi/work/code/go_code/kustomize/examples/15-validationTransformer
+├── README.md
+├── invalid
+│   ├── configmap.yaml
+│   ├── kustomization.yaml
+│   └── validation.yaml
+├── invalid.yaml
+├── kustomize
+│   └── plugin
+│       └── someteam.example.com
+│           └── v1
+│               └── validator
+│                   └── Validator
+├── valid
+│   ├── configmap.yaml
+│   ├── kustomization.yaml
+│   └── validation.yaml
+└── valid.yaml
+
+8 directories, 10 files
+
+$ KUSTOMIZE_PLUGIN_HOME=$DEMO_HOME/kustomize/plugin
+
+$ echo $KUSTOMIZE_PLUGIN_HOME
+/Users/huzhi/work/code/go_code/kustomize/examples/15-validationTransformer/kustomize/plugin
+
+$ export KUSTOMIZE_PLUGIN_HOME
+
+$ kustomize build $DEMO_HOME/valid --enable-alpha-plugins
+apiVersion: v1
+data:
+  foo: bar
+kind: ConfigMap
+metadata:
+  name: cm
+
+$ kustomize build $DEMO_HOME/invalid --enable-alpha-plugins
+Error: failure in plugin configured via /var/folders/4f/gy92m6hd2xj3c6_yz0dht6880000gn/T/kust-plugin-config-1627176926; exit status 1
+
+$ cat /var/folders/4f/gy92m6hd2xj3c6_yz0dht6880000gn/T/kust-plugin-config-1627176926
+apiVersion: someteam.example.com/v1
+kind: Validator
+metadata:
+  name: notImportantHere
+$
+
+```

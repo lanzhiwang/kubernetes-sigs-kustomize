@@ -1,0 +1,5 @@
+apiVersion: someteam.example.com/v1
+kind: GoGetter
+metadata:
+  name: example
+url: github.com/kustless/kustomize-examples.git
