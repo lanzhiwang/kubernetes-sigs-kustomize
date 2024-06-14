@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - pod.yaml
+# kustomize edit set image busybox=alpine:3.6
+images:
+  - name: busybox
+    newName: alpine
+    newTag: "3.6"
