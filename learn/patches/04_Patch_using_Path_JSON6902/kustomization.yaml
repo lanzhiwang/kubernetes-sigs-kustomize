@@ -1,0 +1,12 @@
+# kustomization.yaml
+resources:
+  - deployment.yaml
+patches:
+  - path: add-label.patch.json
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+  - path: fix-version.patch.yaml
+    target:
+      labelSelector: "app.kubernetes.io/name=nginx"

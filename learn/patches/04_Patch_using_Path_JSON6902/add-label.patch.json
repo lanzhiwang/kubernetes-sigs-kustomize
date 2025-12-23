@@ -1,0 +1,7 @@
+[
+    {
+        "op": "add",
+        "path": "/metadata/labels/app.kubernetes.io~1version",
+        "value": "1.21.0"
+    }
+]

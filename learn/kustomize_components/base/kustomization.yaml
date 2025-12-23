@@ -1,0 +1,10 @@
+# $BASE/kustomization.yaml
+resources:
+  - deployment.yaml
+
+configMapGenerator:
+  - name: conf
+    literals:
+      - main.conf=|
+        color=cornflower_blue
+        log_level=info

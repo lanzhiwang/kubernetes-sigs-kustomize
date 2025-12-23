@@ -1,0 +1,18 @@
+# kustomization.yaml
+resources:
+  - deployment.yaml
+patches:
+  - patch: |-
+      - op: add
+        path: /metadata/labels/app.kubernetes.io~1version
+        value: 1.21.0
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: nginx:1.21.0
+    target:
+      labelSelector: "app.kubernetes.io/name=nginx"
